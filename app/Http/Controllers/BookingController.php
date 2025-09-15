@@ -47,4 +47,17 @@ class BookingController extends Controller
     {
         //
     }
+
+    /**
+     * Process payment for the specified booking.
+     */
+    public function pay(Booking $booking)
+    {
+        $booking->update(['status' => 'confirmed']);
+
+        return response()->json([
+            'message' => 'Booking confirmed via payment successfully',
+            'booking' => $booking
+        ], 200);
+    }
 }

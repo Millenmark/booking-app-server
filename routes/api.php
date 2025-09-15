@@ -9,4 +9,6 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::apiResource('bookings', BookingController::class);
+Route::prefix('bookings')->group(function () {
+    require __DIR__ . '/api/bookings.php';
+});
