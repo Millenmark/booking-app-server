@@ -33,7 +33,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->json([
                     'message' => 'Resource not found',
-                    'error_code' => 404,
                     // 'data' => $structuredData,
                     'timestamp' => now()->toISOString()
                 ], 404);
@@ -44,7 +43,6 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => 'Validation failed',
-                    'error_code' => 422,
                     // 'data' => [
                     //     'errors' => $e->errors(),
                     //     'fields' => array_keys($e->errors())
@@ -58,7 +56,6 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => 'Unauthorized',
-                    'error_code' => 401,
                     'timestamp' => now()->toISOString()
                 ], 401);
             }
@@ -74,7 +71,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->json([
                     'message' => 'An internal server error occurred',
-                    'error_code' => 500,
                     'timestamp' => now()->toISOString()
                 ], 500);
             }
