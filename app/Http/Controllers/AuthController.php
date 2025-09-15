@@ -11,9 +11,6 @@ use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
-  /**
-   * Register a new user.
-   */
   public function register(Request $request): JsonResponse
   {
     $request->validate([
@@ -26,7 +23,7 @@ class AuthController extends Controller
       'name' => $request->name,
       'email' => $request->email,
       'password' => Hash::make($request->password),
-      'role' => 'customer', // Default role for new users
+      'role' => 'customer',
     ]);
 
     $token = $user->createToken('api-token')->plainTextToken;
@@ -38,9 +35,6 @@ class AuthController extends Controller
     ], 201);
   }
 
-  /**
-   * Authenticate a user and return a token.
-   */
   public function login(Request $request): JsonResponse
   {
     $request->validate([
@@ -64,12 +58,10 @@ class AuthController extends Controller
     ]);
   }
 
-  /**
-   * Log the user out (revoke the token).
-   */
+
   public function logout(Request $request): JsonResponse
   {
-    $request->user()->currentAccessToken()->delete();
+    $request->user()->tokens()->delete();
 
     return response()->json([
       'message' => 'Logout successful',

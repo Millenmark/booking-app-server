@@ -14,9 +14,17 @@ class BookingController extends Controller
      */
     public function index()
     {
-        $bookings = Booking::get();
+        $user = Auth::user();
+
+        if (in_array($user->role, ['customer'])) {
+            $bookings = Booking::where('customer_id', $user->id)->get();
+        } else {
+            // staff or admin can see all
+            $bookings = Booking::get();
+        }
+
         return response()->json([
-            'message' =>  'Bookings fetched successfully',
+            'message'  =>  'Bookings fetched successfully',
             'data' => $bookings
         ], 200);
     }
@@ -26,7 +34,33 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'customer_id' => 'required|exists:users,id',
+            'scheduled_at' => 'required|date|after:now',
+            'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        if (in_array($user->role, ['customer'])) {
+            // Customers can only create for themselves
+            if ($validated['customer_id'] != $user->id) {
+                abort(403, 'Customers can only create bookings for themselves.');
+            }
+            $validated['customer_id'] = $user->id;
+            $validated['status'] = $validated['status'] ?? 'pending';
+        } else {
+            // Staff/admin can create for any customer, default status pending if not provided
+            $validated['status'] = $validated['status'] ?? 'pending';
+        }
+
+        $booking = Booking::create($validated);
+
+        return response()->json([
+            'message' => 'Booking created successfully',
+            'data' => $booking
+        ], 201);
     }
 
     /**
@@ -34,7 +68,17 @@ class BookingController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $booking = Booking::findOrFail($id);
+        $user = Auth::user();
+
+        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
+            abort(403, 'You can only view your own bookings.');
+        }
+
+        return response()->json([
+            'message' => 'Booking fetched successfully',
+            'data' => $booking
+        ], 200);
     }
 
     /**
@@ -43,18 +87,24 @@ class BookingController extends Controller
     public function update(Request $request, string $id)
     {
         $booking = Booking::findOrFail($id);
+        $user = Auth::user();
+
+        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
+            abort(403, 'You can only update your own bookings.');
+        }
+
         $oldStatus = $booking->status;
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,confirmed,completed,cancelled',
-            'notes' => 'nullable|string',
+            'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $booking->update($validated);
 
         $newStatus = $booking->fresh()->status;
 
-        if ($oldStatus !== $newStatus) {
+        if (isset($validated['status']) && $oldStatus !== $newStatus) {
             BookingStatusAudit::create([
                 'booking_id' => $booking->id,
                 'changed_by' => Auth::id(),
@@ -76,7 +126,18 @@ class BookingController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $booking = Booking::findOrFail($id);
+        $user = Auth::user();
+
+        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
+            abort(403, 'You can only delete your own bookings.');
+        }
+
+        $booking->delete();
+
+        return response()->json([
+            'message' => 'Booking deleted successfully'
+        ], 200);
     }
 
     /**
@@ -84,6 +145,16 @@ class BookingController extends Controller
      */
     public function pay(Booking $booking)
     {
+        $user = Auth::user();
+
+        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
+            abort(403, 'You can only pay for your own bookings.');
+        }
+
+        if ($booking->status !== 'pending') {
+            abort(400, 'Only pending bookings can be paid.');
+        }
+
         $oldStatus = $booking->status;
 
         $booking->update(['status' => 'confirmed']);
