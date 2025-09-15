@@ -13,7 +13,10 @@ class BookingController extends Controller
     public function index()
     {
         $bookings = Booking::get();
-        return response()->json($bookings);
+        return response()->json([
+            'message' =>  'Bookings fetched successfully',
+            'data' => $bookings
+        ], 200);
     }
 
     /**
