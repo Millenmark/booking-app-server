@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Database\Seeders\BookingSeeder;
+use Database\Seeders\PaymentSeeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -16,8 +18,22 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Aki',
+            'role' => 'admin',
+            'email' => 'admin@example.com',
         ]);
+
+        User::factory(1)->create([
+            'role' => 'staff',
+            'email' => 'staff@example.com'
+        ]);
+
+        User::factory(1)->create([
+            'role' => 'customer',
+            'email' => 'customer@example.com'
+        ]);
+
+        $this->call(BookingSeeder::class);
+        $this->call(PaymentSeeder::class);
     }
 }
