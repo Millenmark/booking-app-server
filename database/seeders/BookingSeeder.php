@@ -17,7 +17,7 @@ class BookingSeeder extends Seeder
    */
   public function run(): void
   {
-    $user = User::first();
+    $user = User::where('role', 'customer')->first();
 
     Booking::factory(5)->for($user, 'customer')->create();
   }
