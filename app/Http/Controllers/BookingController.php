@@ -26,7 +26,7 @@ class BookingController extends Controller
         return response()->json([
             'message'  =>  'Bookings fetched successfully',
             'data' => $bookings
-        ], 200);
+        ]);
     }
 
     /**
@@ -78,7 +78,7 @@ class BookingController extends Controller
         return response()->json([
             'message' => 'Booking fetched successfully',
             'data' => $booking
-        ], 200);
+        ]);
     }
 
     /**
@@ -118,7 +118,7 @@ class BookingController extends Controller
         return response()->json([
             'message' => 'Booking updated successfully',
             'data' => $booking
-        ], 200);
+        ]);
     }
 
     /**
@@ -137,7 +137,7 @@ class BookingController extends Controller
 
         return response()->json([
             'message' => 'Booking deleted successfully'
-        ], 200);
+        ]);
     }
 
     /**
@@ -175,6 +175,6 @@ class BookingController extends Controller
         return response()->json([
             'message' => 'Booking confirmed via payment successfully',
             'booking' => $booking
-        ], 200);
+        ]);
     }
 }
