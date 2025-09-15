@@ -20,5 +20,8 @@ class BookingSeeder extends Seeder
     $user = User::where('role', 'customer')->first();
 
     Booking::factory(5)->for($user, 'customer')->create();
+    Booking::factory(2)->for($user, 'customer')->create([
+      'status' => 'confirmed'
+    ]);
   }
 }

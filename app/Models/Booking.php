@@ -38,4 +38,12 @@ class Booking extends Model
     {
         return $this->hasMany(BookingStatusAudit::class);
     }
+
+    /**
+     * Get the payment for the booking.
+     */
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }

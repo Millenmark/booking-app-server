@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\BookingStatusAudit;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,10 +18,10 @@ class BookingController extends Controller
         $user = Auth::user();
 
         if (in_array($user->role, ['customer'])) {
-            $bookings = Booking::where('customer_id', $user->id)->get();
+            $bookings = Booking::where('customer_id', $user->id)->with('payment')->get();
         } else {
             // staff or admin can see all
-            $bookings = Booking::get();
+            $bookings = Booking::with('payment')->get();
         }
 
         return response()->json([
@@ -68,7 +69,7 @@ class BookingController extends Controller
      */
     public function show(string $id)
     {
-        $booking = Booking::findOrFail($id);
+        $booking = Booking::with('payment')->findOrFail($id);
         $user = Auth::user();
 
         if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
@@ -141,26 +142,48 @@ class BookingController extends Controller
     }
 
     /**
-     * Process payment for the specified booking.
+     * Process cash payment for the specified booking (staff/admin only).
      */
-    public function pay(Booking $booking)
+    public function pay(Request $request, Booking $booking)
     {
         $user = Auth::user();
 
-        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
-            abort(403, 'You can only pay for your own bookings.');
+        // Only staff/admin can mark as paid
+        if ($user->role === 'customer') {
+            abort(403, 'Only staff or admin can mark bookings as paid.');
+        }
+
+        // Check authorization for own customer's booking if needed, but since staff, allow all
+        if ($booking->customer_id != $user->id && $user->role !== 'admin') {
+            abort(403, 'You can only mark payments for your customers.');
         }
 
         if ($booking->status !== 'pending') {
-            abort(400, 'Only pending bookings can be paid.');
+            abort(400, 'Only pending bookings can be marked as paid.');
         }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'receipt_number' => 'nullable|string|max:100',
+        ]);
 
         $oldStatus = $booking->status;
 
+        // Create payment record
+        $payment = Payment::create([
+            'user_id' => Auth::id(),
+            'booking_id' => $booking->id,
+            'amount' => $validated['amount'],
+            'paid_at' => now(),
+            'receipt_number' => $validated['receipt_number'] ?? null,
+        ]);
+
+        // Update booking status
         $booking->update(['status' => 'confirmed']);
 
         $newStatus = $booking->status;
 
+        // Audit status change
         if ($oldStatus !== $newStatus) {
             BookingStatusAudit::create([
                 'booking_id' => $booking->id,
@@ -168,13 +191,17 @@ class BookingController extends Controller
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
                 'changed_at' => now(),
-                'notes' => 'Status changed via payment confirmation',
+                'notes' => 'Status changed via cash payment confirmation',
             ]);
         }
 
+        // Fresh booking with payment
+        $booking->load('payment');
+
         return response()->json([
-            'message' => 'Booking confirmed via payment successfully',
-            'booking' => $booking
+            'message' => 'Cash payment recorded and booking confirmed successfully',
+            'booking' => $booking,
+            'payment' => $payment
         ]);
     }
 }
