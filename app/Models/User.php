@@ -47,11 +47,13 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Get the bookings for the user.
-     */
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'customer_id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'customer_id');
     }
 }

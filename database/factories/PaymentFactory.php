@@ -14,7 +14,7 @@ class PaymentFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'customer_id' => User::factory(),
             'booking_id' => Booking::factory(),
             'amount' => $this->faker->randomFloat(2, 10, 1000),
             'paid_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
