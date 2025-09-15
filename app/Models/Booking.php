@@ -30,4 +30,12 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the status audits for the booking.
+     */
+    public function statusAudits()
+    {
+        return $this->hasMany(BookingStatusAudit::class);
+    }
 }
