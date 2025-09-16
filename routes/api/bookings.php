@@ -9,5 +9,4 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('/{booking}', [BookingController::class, 'show']);
   Route::put('/{booking}', [BookingController::class, 'update']);
   Route::delete('/{booking}', [BookingController::class, 'destroy']);
-  Route::post('/{booking}/pay', [BookingController::class, 'pay']);
 });

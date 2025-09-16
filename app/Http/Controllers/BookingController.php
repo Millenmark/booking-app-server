@@ -50,15 +50,13 @@ class BookingController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Booking $booking)
     {
-        $booking = Booking::with('payment')->findOrFail($id);
+        $booking->load('payment');
+
         $user = Auth::user();
 
-        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
+        if ($user->role === 'customer' && $booking->customer_id != $user->id) {
             abort(403, 'You can only view your own bookings.');
         }
 
@@ -68,52 +66,64 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+
+    public function update(Request $request, Booking $booking)
     {
-        $booking = Booking::findOrFail($id);
         $user = Auth::user();
 
-        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
-            abort(403, 'You can only update your own bookings.');
-        }
+        if (in_array($user->role, ['customer'])) {
+            if ($booking->customer_id != $user->id) {
+                abort(403, 'You can only update your own bookings.');
+            }
 
-        $oldStatus = $booking->status;
+            $validated = $request->validate([
+                'status' => 'required|in:cancelled',
+            ]);
 
-        $validated = $request->validate([
-            'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
-            'notes' => 'nullable|string|max:1000',
-        ]);
+            $booking->update([
+                'status' => 'cancelled',
+            ]);
 
-        $booking->update($validated);
-
-        $newStatus = $booking->fresh()->status;
-
-        if (isset($validated['status']) && $oldStatus !== $newStatus) {
             BookingStatusAudit::create([
                 'booking_id' => $booking->id,
-                'changed_by' => Auth::id(),
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
+                'changed_by' => $user->id,
+                'old_status' => $booking->status,
+                'new_status' => 'cancelled',
                 'changed_at' => now(),
-                'notes' => $validated['notes'] ?? null,
             ]);
+        } else {
+            $oldStatus = $booking->status;
+
+            $validated = $request->validate([
+                'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
+                'notes' => 'nullable|string|max:1000',
+            ]);
+
+            $booking->update($validated);
+
+            $newStatus = $booking->fresh()->status;
+
+            if (isset($validated['status']) && $oldStatus !== $newStatus) {
+                BookingStatusAudit::create([
+                    'booking_id' => $booking->id,
+                    'changed_by' => $user->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'changed_at' => now(),
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+            }
         }
 
         return response()->json([
             'message' => 'Booking updated successfully',
-            'data' => $booking
+            'data' => $booking->fresh()
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+
+    public function destroy(Booking $booking)
     {
-        $booking = Booking::findOrFail($id);
         $user = Auth::user();
 
         if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
