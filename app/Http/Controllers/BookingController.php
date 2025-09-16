@@ -7,6 +7,7 @@ use App\Models\BookingStatusAudit;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
@@ -70,8 +71,9 @@ class BookingController extends Controller
     public function update(Request $request, Booking $booking)
     {
         $user = Auth::user();
+        $payment = null;
 
-        if (in_array($user->role, ['customer'])) {
+        if ($user->role === 'customer') {
             if ($booking->customer_id != $user->id) {
                 abort(403, 'You can only update your own bookings.');
             }
@@ -80,6 +82,8 @@ class BookingController extends Controller
                 'status' => 'required|in:cancelled',
             ]);
 
+            $oldStatus = $booking->status;
+
             $booking->update([
                 'status' => 'cancelled',
             ]);
@@ -87,7 +91,7 @@ class BookingController extends Controller
             BookingStatusAudit::create([
                 'booking_id' => $booking->id,
                 'changed_by' => $user->id,
-                'old_status' => $booking->status,
+                'old_status' => $oldStatus,
                 'new_status' => 'cancelled',
                 'changed_at' => now(),
             ]);
@@ -100,8 +104,17 @@ class BookingController extends Controller
             ]);
 
             $booking->update($validated);
-
             $newStatus = $booking->fresh()->status;
+
+            if (($validated['status'] ?? null) === 'confirmed') {
+                $payment = Payment::create([
+                    'customer_id' => $booking->customer_id,
+                    'booking_id' => $booking->id,
+                    'amount' => $booking->service->price ?? 0,
+                    'paid_at' => now(),
+                    'receipt_number' => 'REC-' . strtoupper(Str::random(8)) . $booking->id . $booking->customer_id,
+                ]);
+            }
 
             if (isset($validated['status']) && $oldStatus !== $newStatus) {
                 BookingStatusAudit::create([
@@ -115,11 +128,18 @@ class BookingController extends Controller
             }
         }
 
-        return response()->json([
+        $response = [
             'message' => 'Booking updated successfully',
-            'data' => $booking->fresh()
-        ]);
+            'data' => $booking->fresh(),
+        ];
+
+        if ($payment) {
+            $response['data']['receipt'] = $payment;
+        }
+
+        return response()->json($response);
     }
+
 
 
     public function destroy(Booking $booking)
@@ -134,70 +154,6 @@ class BookingController extends Controller
 
         return response()->json([
             'message' => 'Booking deleted successfully'
-        ]);
-    }
-
-    /**
-     * Process cash payment for the specified booking (staff/admin only).
-     */
-    public function pay(Request $request, Booking $booking)
-    {
-        $user = Auth::user();
-
-        // Only staff/admin can mark as paid
-        if ($user->role === 'customer') {
-            abort(403, 'Only staff or admin can mark bookings as paid.');
-        }
-
-        // Check authorization for own customer's booking if needed, but since staff, allow all
-        if ($booking->customer_id != $user->id && $user->role !== 'admin') {
-            abort(403, 'You can only mark payments for your customers.');
-        }
-
-        if ($booking->status !== 'pending') {
-            abort(400, 'Only pending bookings can be marked as paid.');
-        }
-
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'receipt_number' => 'nullable|string|max:100',
-        ]);
-
-        $oldStatus = $booking->status;
-
-        // Create payment record
-        $payment = Payment::create([
-            'user_id' => Auth::id(),
-            'booking_id' => $booking->id,
-            'amount' => $validated['amount'],
-            'paid_at' => now(),
-            'receipt_number' => $validated['receipt_number'] ?? null,
-        ]);
-
-        // Update booking status
-        $booking->update(['status' => 'confirmed']);
-
-        $newStatus = $booking->status;
-
-        // Audit status change
-        if ($oldStatus !== $newStatus) {
-            BookingStatusAudit::create([
-                'booking_id' => $booking->id,
-                'changed_by' => Auth::id(),
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'changed_at' => now(),
-                'notes' => 'Status changed via cash payment confirmation',
-            ]);
-        }
-
-        // Fresh booking with payment
-        $booking->load('payment');
-
-        return response()->json([
-            'message' => 'Cash payment recorded and booking confirmed successfully',
-            'booking' => $booking,
-            'payment' => $payment
         ]);
     }
 }

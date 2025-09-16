@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 // }
 
                 return response()->json([
-                    'message' => 'Resource not found',
+                    'message' => $e->getMessage() ?: 'Resource not found',
                     // 'data' => $structuredData,
                     'timestamp' => now()->toISOString()
                 ], 404);
@@ -42,7 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->renderable(function (ValidationException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
-                    'message' => 'Validation failed',
+                    'message' => $e->getMessage() ?: 'Validation failed',
                     // 'data' => [
                     //     'errors' => $e->errors(),
                     //     'fields' => array_keys($e->errors())
