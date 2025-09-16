@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\BookingStatusAudit;
 use App\Models\Payment;
+use App\Models\Service;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -32,6 +34,7 @@ class BookingController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
+            'service_id' => 'required|exists:services,id',
             'scheduled_at' => 'required|date|after:now',
             'notes' => 'nullable|string|max:1000',
         ]);
@@ -41,6 +44,31 @@ class BookingController extends Controller
             $validated['status'] = 'pending';
         } else {
             abort(403, 'Only Customers can create booking');
+        }
+
+        $service = Service::findOrFail($validated['service_id']);
+        $duration = $service->duration_minutes;
+        $newStart = Carbon::parse($validated['scheduled_at']);
+        $newEnd = $newStart->copy()->addMinutes($duration);
+
+        $overlappingBookings = Booking::where('customer_id', $validated['customer_id'])
+            ->where('status', '!=', 'cancelled')
+            ->with('service')
+            ->get();
+
+        foreach ($overlappingBookings as $existing) {
+            $existingStart = Carbon::parse($existing->scheduled_at);
+            $existingService = $existing->service;
+            $existingEnd = $existingStart->copy()->addMinutes($existingService->duration_minutes);
+
+            if ($existingStart->lt($newEnd) && $existingEnd->gt($newStart)) {
+                return response()->json([
+                    'message' => 'Booking overlaps with an existing booking.',
+                    'errors' => [
+                        'scheduled_at' => ['Overlaps with existing booking at ' . $existing->scheduled_at]
+                    ]
+                ], 422);
+            }
         }
 
         $booking = Booking::create($validated);
