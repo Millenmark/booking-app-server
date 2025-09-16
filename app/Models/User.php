@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -54,6 +55,6 @@ class User extends Authenticatable
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'customer_id');
+        return $this->hasMany(Payment::class, 'user_id');
     }
 }

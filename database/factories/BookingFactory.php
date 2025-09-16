@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Booking;
 use App\Models\User;
+use App\Models\Service;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
@@ -19,7 +20,7 @@ class BookingFactory extends Factory
    */
   public function definition(): array
   {
-    $services = [
+    $serviceNames = [
       "Haircut",
       "Hair Coloring",
       "Manicure",
@@ -29,9 +30,17 @@ class BookingFactory extends Factory
       "Waxing"
     ];
 
+    $service = Service::create([
+      'name' => fake()->randomElement($serviceNames),
+      'description' => fake()->text(),
+      'price' => fake()->randomFloat(2, 10, 200),
+      'duration_minutes' => fake()->numberBetween(15, 120),
+      'is_active' => true,
+    ]);
+
     return [
       'customer_id' => User::factory(),
-      'service_name' => fake()->randomElement($services),
+      'service_id' => $service->id,
       'scheduled_at' => fake()->dateTimeBetween(now(), now()->addYear()),
       'status' => fake()->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'notes' => fake()->optional()->text(),
