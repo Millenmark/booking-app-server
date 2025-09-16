@@ -17,11 +17,13 @@ class BookingSeeder extends Seeder
    */
   public function run(): void
   {
-    $user = User::where('role', 'customer')->first();
+    $customers = User::where('role', 'customer')->get();
 
-    Booking::factory(5)->for($user, 'customer')->create();
-    Booking::factory(2)->for($user, 'customer')->create([
-      'status' => 'confirmed'
-    ]);
+    foreach ($customers as $customer) {
+      Booking::factory(5)->for($customer, 'customer')->create();
+      Booking::factory(2)->for($customer, 'customer')->create([
+        'status' => 'confirmed'
+      ]);
+    }
   }
 }

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Database\Seeders\BookingSeeder;
 use Database\Seeders\PaymentSeeder;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -28,10 +29,13 @@ class DatabaseSeeder extends Seeder
             'email' => 'staff@example.com'
         ]);
 
-        User::factory(1)->create([
-            'role' => 'customer',
-            'email' => 'customer@example.com'
-        ]);
+        User::factory(2)
+            ->create(new Sequence(
+                fn($sequence) => [
+                    'role' => 'customer',
+                    'email' => 'customer' . ($sequence->index + 1) . '@example.com'
+                ]
+            ));
 
         $this->call(BookingSeeder::class);
         $this->call(PaymentSeeder::class);
