@@ -19,8 +19,19 @@ class BookingFactory extends Factory
    */
   public function definition(): array
   {
+    $services = [
+      "Haircut",
+      "Hair Coloring",
+      "Manicure",
+      "Pedicure",
+      "Massage Therapy",
+      "Facial Treatment",
+      "Waxing"
+    ];
+
     return [
       'customer_id' => User::factory(),
+      'service_name' => fake()->randomElement($services),
       'scheduled_at' => fake()->dateTimeBetween(now(), now()->addYear()),
       'status' => fake()->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'notes' => fake()->optional()->text(),

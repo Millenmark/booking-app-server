@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
             $table->dateTime('scheduled_at');
+            $table->string('service_name');
             $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled']);
             $table->text('notes')->nullable();
             $table->timestamps();

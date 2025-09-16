@@ -10,17 +10,13 @@ use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $user = Auth::user();
 
         if (in_array($user->role, ['customer'])) {
-            $bookings = Booking::where('customer_id', $user->id)->with('payment')->get();
+            $bookings = Booking::where('customer_id', $user->id)->get();
         } else {
-            // staff or admin can see all
             $bookings = Booking::with('payment')->get();
         }
 
@@ -30,30 +26,20 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $user = Auth::user();
 
         $validated = $request->validate([
-            'customer_id' => 'required|exists:users,id',
             'scheduled_at' => 'required|date|after:now',
-            'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
             'notes' => 'nullable|string|max:1000',
         ]);
 
         if (in_array($user->role, ['customer'])) {
-            // Customers can only create for themselves
-            if ($validated['customer_id'] != $user->id) {
-                abort(403, 'Customers can only create bookings for themselves.');
-            }
             $validated['customer_id'] = $user->id;
-            $validated['status'] = $validated['status'] ?? 'pending';
+            $validated['status'] = 'pending';
         } else {
-            // Staff/admin can create for any customer, default status pending if not provided
-            $validated['status'] = $validated['status'] ?? 'pending';
+            abort(403, 'Only Customers can create booking');
         }
 
         $booking = Booking::create($validated);
