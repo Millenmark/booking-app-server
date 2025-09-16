@@ -70,7 +70,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ]);
 
                 return response()->json([
-                    'message' => 'An internal server error occurred',
+                    'message' => $e->getMessage() ?: 'An internal server error occurred',
                     'timestamp' => now()->toISOString()
                 ], 500);
             }
