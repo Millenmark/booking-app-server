@@ -16,7 +16,7 @@ return new class extends Migration
       $table->string('name');
       $table->text('description');
       $table->decimal('price', 10, 2);
-      $table->integer('duration_minutes');
+      $table->integer('duration_minutes')->default(30);
       $table->boolean('is_active');
       $table->timestamps();
     });
