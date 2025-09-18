@@ -35,9 +35,9 @@ class Payment extends Model
         ];
     }
 
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id');
     }
 
     public function booking()
