@@ -14,21 +14,34 @@ use Illuminate\Http\JsonResponse;
 
 class BookingController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
 
         if (in_array($user->role, ['customer'])) {
-            $bookings = Booking::where('customer_id', $user->id)->where("status", "pending")->get();
+            $data = Booking::where('customer_id', $user->id)
+                ->where('status', 'pending')
+                ->join('services', 'bookings.service_id', '=', 'services.id')
+                ->select(
+                    'bookings.id',
+                    'bookings.scheduled_at as schedule',
+                    'services.name as name',
+                    'services.price as price'
+                )
+                ->get();
         } else {
-            $bookings = Booking::with('payment')->get();
+            $data = Booking::select('id', 'service_id', 'scheduled_at')
+                ->with('service')
+                ->with('payment')
+                ->get();
         }
 
         return response()->json([
-            'message'  =>  'Bookings fetched successfully',
-            'data' => $bookings
+            'message' => 'Bookings fetched successfully',
+            'data'    => $data
         ]);
     }
+
 
     public function store(Request $request): JsonResponse
     {
