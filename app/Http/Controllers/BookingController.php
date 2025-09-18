@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 
 class BookingController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(): JsonResponse
     {
         $user = Auth::user();
 
