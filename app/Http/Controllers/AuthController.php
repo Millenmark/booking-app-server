@@ -104,7 +104,11 @@ class AuthController extends Controller
     );
 
     return $status === Password::PASSWORD_RESET
-      ? response()->json(['message' => __($status)])
-      : response()->json(['message' => __($status)], 400);
+      ? response()->json(['message' => 'Your password has been changed. You may now login'])
+      : response()->json(['message' => match ($status) {
+        Password::INVALID_USER  => 'No account found with that email',
+        Password::INVALID_TOKEN => 'Invalid request',
+        default => 'Password reset failed. Please try again',
+      }], 400);
   }
 }
