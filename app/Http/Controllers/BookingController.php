@@ -10,10 +10,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
 
 class BookingController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
         $user = Auth::user();
 
@@ -29,7 +30,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $user = Auth::user();
 
@@ -79,7 +80,7 @@ class BookingController extends Controller
         ], 201);
     }
 
-    public function show(Booking $booking)
+    public function show(Booking $booking): JsonResponse
     {
         $booking->load('payment');
 
@@ -96,7 +97,7 @@ class BookingController extends Controller
     }
 
 
-    public function update(Request $request, Booking $booking)
+    public function update(Request $request, Booking $booking): JsonResponse
     {
         $user = Auth::user();
         $payment = null;
@@ -170,7 +171,7 @@ class BookingController extends Controller
 
 
 
-    public function destroy(Booking $booking)
+    public function destroy(Booking $booking): JsonResponse
     {
         $user = Auth::user();
 

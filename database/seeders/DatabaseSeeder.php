@@ -21,19 +21,19 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Aki',
             'role' => 'admin',
-            'email' => 'admin@example.com',
+            'email' => 'admin@mailsac.com',
         ]);
 
         User::factory(1)->create([
             'role' => 'staff',
-            'email' => 'staff@example.com'
+            'email' => 'staff@mailsac.com'
         ]);
 
         User::factory(2)
             ->create(new Sequence(
                 fn($sequence) => [
                     'role' => 'customer',
-                    'email' => 'customer' . ($sequence->index + 1) . '@example.com'
+                    'email' => 'customer' . ($sequence->index + 1) . '@mailsac.com'
                 ]
             ));
 
