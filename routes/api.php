@@ -24,3 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('bookings')->group(function () {
     require __DIR__ . '/api/bookings.php';
 });
+
+Route::prefix('services')->group(function () {
+    require __DIR__ . '/api/services.php';
+});
