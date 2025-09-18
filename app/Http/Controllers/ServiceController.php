@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller
 {
-    public function index(): JsonResponse
+    public function getAllServices(): JsonResponse
     {
         return response()->json([
             'message' => 'Services fetched successfully',

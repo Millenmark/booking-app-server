@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 
 class BookingController extends Controller
 {
-    public function index(): JsonResponse
+    public function getAllBookings(): JsonResponse
     {
         $user = Auth::user();
 
@@ -43,7 +43,7 @@ class BookingController extends Controller
     }
 
 
-    public function store(Request $request): JsonResponse
+    public function createBooking(Request $request): JsonResponse
     {
         $user = Auth::user();
 
@@ -93,7 +93,7 @@ class BookingController extends Controller
         ], 201);
     }
 
-    public function show(Booking $booking): JsonResponse
+    public function getSingleBooking(Booking $booking): JsonResponse
     {
         $booking->load('payment');
 
@@ -110,7 +110,7 @@ class BookingController extends Controller
     }
 
 
-    public function update(Request $request, Booking $booking): JsonResponse
+    public function updateBooking(Request $request, Booking $booking): JsonResponse
     {
         $user = Auth::user();
         $payment = null;
@@ -184,7 +184,7 @@ class BookingController extends Controller
 
 
 
-    public function destroy(Booking $booking): JsonResponse
+    public function deleteBooking(Booking $booking): JsonResponse
     {
         $user = Auth::user();
 
