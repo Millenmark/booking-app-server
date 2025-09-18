@@ -19,7 +19,7 @@ class BookingController extends Controller
         $user = Auth::user();
 
         if (in_array($user->role, ['customer'])) {
-            $bookings = Booking::where('customer_id', $user->id)->get();
+            $bookings = Booking::where('customer_id', $user->id)->where("status", "pending")->get();
         } else {
             $bookings = Booking::with('payment')->get();
         }
