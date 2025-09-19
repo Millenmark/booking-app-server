@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasDateFilter;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Booking extends Model
 {
     /** @use HasFactory */
-    use HasFactory;
+    use HasFactory, HasDateFilter;
 
     /**
      * The attributes that are mass assignable.

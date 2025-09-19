@@ -2,31 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Http\Request;
 use App\Models\Booking;
+use App\Models\Payment;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function getTotalBookings(Request $request)
+    public function getBookingAnalytics(Request $request)
     {
-
-        $query = Booking::query();
-
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->whereBetween('created_at', [
-                Carbon::parse($request->date_from)->startOfDay(),
-                Carbon::parse($request->date_to)->endOfDay(),
-            ]);
-        } else {
-            $query->whereDate('created_at', Carbon::today());
-        }
-
-        $total = $query->count();
+        $baseQuery = Booking::query()->withDateFilter($request);
 
         return response()->json([
-            'total' => $total
+            'total' => (clone $baseQuery)->count(),
+            'unpaid' => (clone $baseQuery)->where('status', 'pending')->count(),
+        ]);
+    }
+
+    public function getRevenueAnalytics(Request $request)
+    {
+
+        $total = Payment::withDateFilter($request)
+            ->sum('amount');
+
+        return response()->json([
+            'total' => (float) $total
         ]);
     }
 }

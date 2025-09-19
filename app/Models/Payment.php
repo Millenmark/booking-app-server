@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasDateFilter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, HasDateFilter;
 
     /**
      * The attributes that are mass assignable.
