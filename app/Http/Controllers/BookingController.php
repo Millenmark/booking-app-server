@@ -16,6 +16,8 @@ class BookingController extends Controller
 {
     public function getAllBookings(): JsonResponse
     {
+        $this->authorize('viewAny', Booking::class);
+
         $user = Auth::user();
 
         if (in_array($user->role, ['customer'])) {
@@ -45,6 +47,8 @@ class BookingController extends Controller
 
     public function createBooking(Request $request): JsonResponse
     {
+        $this->authorize('create', Booking::class);
+
         $user = Auth::user();
 
         $validated = $request->validate([
@@ -53,12 +57,8 @@ class BookingController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        if (in_array($user->role, ['customer'])) {
-            $validated['customer_id'] = $user->id;
-            $validated['status'] = 'pending';
-        } else {
-            abort(403, 'Only Customers can create booking');
-        }
+        $validated['customer_id'] = $user->id;
+        $validated['status'] = 'pending';
 
         $service = Service::findOrFail($validated['service_id']);
         $duration = $service->duration_minutes;
@@ -95,13 +95,9 @@ class BookingController extends Controller
 
     public function getSingleBooking(Booking $booking): JsonResponse
     {
+        $this->authorize('view', $booking);
+
         $booking->load('payment');
-
-        $user = Auth::user();
-
-        if ($user->role === 'customer' && $booking->customer_id != $user->id) {
-            abort(403, 'You can only view your own bookings.');
-        }
 
         return response()->json([
             'message' => 'Booking fetched successfully',
@@ -112,14 +108,12 @@ class BookingController extends Controller
 
     public function updateBooking(Request $request, Booking $booking): JsonResponse
     {
+        $this->authorize('update', $booking);
+
         $user = Auth::user();
         $payment = null;
 
         if ($user->role === 'customer') {
-            if ($booking->customer_id != $user->id) {
-                abort(403, 'You can only update your own bookings.');
-            }
-
             $validated = $request->validate([
                 'status' => 'required|in:cancelled',
             ]);
@@ -186,11 +180,7 @@ class BookingController extends Controller
 
     public function deleteBooking(Booking $booking): JsonResponse
     {
-        $user = Auth::user();
-
-        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
-            abort(403, 'You can only delete your own bookings.');
-        }
+        $this->authorize('delete', $booking);
 
         $booking->delete();
 
