@@ -14,6 +14,8 @@ class BookingStatusAudit extends Model
     protected $fillable = [
         'booking_id',
         'changed_by',
+        'service_name',
+        'role',
         'old_status',
         'new_status',
         'changed_at',
@@ -25,10 +27,5 @@ class BookingStatusAudit extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
-    }
-
-    public function changedBy()
-    {
-        return $this->belongsTo(User::class);
     }
 }

@@ -121,7 +121,9 @@ class BookingController extends Controller
 
             BookingStatusAudit::create([
                 'booking_id' => $booking->id,
-                'changed_by' => $user->id,
+                'service_name' => $booking->service->name,
+                'changed_by' => $user->name,
+                'role' => $user->role,
                 'old_status' => $oldStatus,
                 'new_status' => 'cancelled',
                 'changed_at' => now(),
@@ -150,7 +152,9 @@ class BookingController extends Controller
             if (isset($validated['status']) && $oldStatus !== $newStatus) {
                 BookingStatusAudit::create([
                     'booking_id' => $booking->id,
-                    'changed_by' => $user->id,
+                    'service_name' => $booking->service->name,
+                    'changed_by' => $user->name,
+                    'role' => $user->role,
                     'old_status' => $oldStatus,
                     'new_status' => $newStatus,
                     'changed_at' => now(),
