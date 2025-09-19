@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
                 ]
             ));
 
+        $this->call(ServiceSeeder::class);
         $this->call(BookingSeeder::class);
         $this->call(PaymentSeeder::class);
     }
