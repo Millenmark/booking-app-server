@@ -11,8 +11,6 @@ class ServiceController extends Controller
 {
     public function getAllServices(): JsonResponse
     {
-        $this->authorize('viewAny', Service::class);
-
         return response()->json([
             'message' => 'Services fetched successfully',
             'data' => Service::get()
