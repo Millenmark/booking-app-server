@@ -10,10 +10,10 @@ trait HasDateFilter
   /**
    * Scope to apply date filter based on request.
    */
-  public function scopeWithDateFilter($query, $request)
+  public function scopeWithDateFilter($query, $request, string $field = 'created_at')
   {
     if ($request->filled('date_from') && $request->filled('date_to')) {
-      $query->whereBetween('created_at', [
+      $query->whereBetween($field, [
         Carbon::parse($request->date_from)->startOfDay(),
         Carbon::parse($request->date_to)->endOfDay(),
       ]);
