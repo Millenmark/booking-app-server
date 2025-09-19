@@ -16,8 +16,6 @@ class BookingController extends Controller
 {
     public function getAllBookings(): JsonResponse
     {
-        $this->authorize('viewAny', Booking::class);
-
         $user = Auth::user();
 
         if (in_array($user->role, ['customer'])) {
@@ -47,7 +45,6 @@ class BookingController extends Controller
 
     public function createBooking(Request $request): JsonResponse
     {
-        $this->authorize('create', Booking::class);
 
         $user = Auth::user();
 
@@ -95,7 +92,6 @@ class BookingController extends Controller
 
     public function getSingleBooking(Booking $booking): JsonResponse
     {
-        $this->authorize('view', $booking);
 
         $booking->load('payment');
 
@@ -108,7 +104,6 @@ class BookingController extends Controller
 
     public function updateBooking(Request $request, Booking $booking): JsonResponse
     {
-        $this->authorize('update', $booking);
 
         $user = Auth::user();
         $payment = null;
@@ -180,7 +175,6 @@ class BookingController extends Controller
 
     public function deleteBooking(Booking $booking): JsonResponse
     {
-        $this->authorize('delete', $booking);
 
         $booking->delete();
 

@@ -24,6 +24,25 @@ class BookingPolicy
         return $user->role !== 'customer' || $booking->customer_id === $user->id;
     }
 
+    public function scopeViewAny(User $user, $query)
+    {
+        if ($user->role === 'customer') {
+            return $query->where('bookings.customer_id', $user->id)
+                ->where('bookings.status', 'pending')
+                ->join('services', 'bookings.service_id', '=', 'services.id')
+                ->select(
+                    'bookings.id',
+                    'bookings.scheduled_at as schedule',
+                    'services.name as name',
+                    'services.price as price'
+                );
+        }
+
+        // Admin sees all with relations
+        return $query->select('id', 'service_id', 'scheduled_at')
+            ->with('service', 'payment');
+    }
+
     /**
      * Determine whether the user can create models.
      */
