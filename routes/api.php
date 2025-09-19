@@ -13,3 +13,7 @@ Route::prefix('bookings')->group(function () {
 Route::prefix('services')->group(function () {
     require __DIR__ . '/api/services.php';
 });
+
+Route::prefix('dashboard')->group(function () {
+    require __DIR__ . '/api/dashboard.php';
+});
