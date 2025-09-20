@@ -24,7 +24,10 @@ class BookingFactory extends Factory
     return [
       'customer_id' => User::factory(),
       'service_id' => Service::inRandomOrder()->first()->id,
-      'scheduled_at' => fake()->dateTimeBetween(now(), now()->addYear()),
+      'scheduled_at' => fake()->dateTimeBetween(
+        now()->startOfMonth(),
+        now()->endOfMonth()
+      ),
       'status' => fake()->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'notes' => fake()->optional()->text(),
     ];

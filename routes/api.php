@@ -17,3 +17,7 @@ Route::prefix('services')->group(function () {
 Route::prefix('dashboard')->group(function () {
     require __DIR__ . '/api/dashboard.php';
 });
+
+Route::prefix('audit')->group(function () {
+    require __DIR__ . '/api/audit.php';
+});

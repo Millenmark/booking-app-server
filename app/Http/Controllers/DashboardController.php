@@ -15,11 +15,11 @@ class DashboardController extends Controller
 {
     public function getBookingAnalytics(Request $request): JsonResponse
     {
-        $baseQuery = Booking::query()->withDateFilter($request);
+        $baseQuery = Booking::query();
 
-        $total = (clone $baseQuery)->count();
-        $unpaid = (clone $baseQuery)->where('status', 'pending')->count();
-        $paid = (clone $baseQuery)->has('payment')->count();
+        $total = (clone $baseQuery)->withDateFilter($request)->count();
+        $unpaid = (clone $baseQuery)->withDateFilter($request)->where('status', 'pending')->count();
+        $paid = (clone $baseQuery)->withDateFilter($request)->has('payment')->count();
         $conversion_rate = $total > 0 ? round(($paid / $total) * 100, 2) : 0;
 
         $start = Carbon::now()->startOfMonth();
@@ -52,9 +52,9 @@ class DashboardController extends Controller
 
     public function getRevenueAnalytics(Request $request): JsonResponse
     {
-        $baseQuery = Payment::query()->withDateFilter($request);
+        $baseQuery = Payment::query();
 
-        $total = (clone $baseQuery)->sum('amount');
+        $total = (clone $baseQuery)->withDateFilter($request, 'paid_at')->sum('amount');
 
         $start = Carbon::now()->startOfMonth();
         $end = Carbon::now()->endOfMonth();
@@ -82,7 +82,10 @@ class DashboardController extends Controller
 
     public function getServiceAnalytics(Request $request): JsonResponse
     {
-        $baseQuery = Booking::query()->withDateFilter($request);
+        $start = Carbon::now()->startOfMonth();
+        $end   = Carbon::now()->endOfMonth();
+
+        $baseQuery = Booking::whereBetween('scheduled_at', [$start, $end]);
 
         $bookingCounts = $baseQuery
             ->select('service_id', DB::raw('COUNT(*) as total'))
@@ -100,7 +103,7 @@ class DashboardController extends Controller
         ksort($serviceCounts);
 
         return response()->json([
-            'top_services' => $serviceCounts
+            'top_services' => $serviceCounts,
         ]);
     }
 }
