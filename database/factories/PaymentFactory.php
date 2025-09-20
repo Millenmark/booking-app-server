@@ -9,16 +9,21 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PaymentFactory extends Factory
 {
+    private static $counter = 0;
+
     protected $model = Payment::class;
 
     public function definition(): array
     {
+
         return [
             'customer_id' => User::factory(),
             'booking_id' => Booking::factory(),
             'amount' => $this->faker->randomFloat(2, 10, 1000),
             'paid_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
             'receipt_number' => $this->faker->optional()->numerify('REC-####'),
+            'created_at' => now()->addSeconds(self::$counter++),
+            'updated_at' => now()->addSeconds(self::$counter++),
         ];
     }
 }

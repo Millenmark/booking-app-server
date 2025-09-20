@@ -13,6 +13,8 @@ use Illuminate\Support\Carbon;
  */
 class BookingFactory extends Factory
 {
+  private static $counter = 0;
+
   /**
    * Define the model's default state.
    *
@@ -20,7 +22,6 @@ class BookingFactory extends Factory
    */
   public function definition(): array
   {
-
     return [
       'customer_id' => User::factory(),
       'service_id' => Service::inRandomOrder()->first()->id,
@@ -30,6 +31,8 @@ class BookingFactory extends Factory
       ),
       'status' => fake()->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
       'notes' => fake()->optional()->text(),
+      'created_at' => now()->addSeconds(self::$counter++),
+      'updated_at' => now()->addSeconds(self::$counter++),
     ];
   }
 }
