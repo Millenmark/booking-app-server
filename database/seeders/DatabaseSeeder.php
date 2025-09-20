@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Database\Seeders\BookingSeeder;
+use Database\Seeders\BookingStatusAuditSeeder;
 use Database\Seeders\PaymentSeeder;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -40,5 +41,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ServiceSeeder::class);
         $this->call(BookingSeeder::class);
         $this->call(PaymentSeeder::class);
+        $this->call(BookingStatusAuditSeeder::class);
     }
 }
