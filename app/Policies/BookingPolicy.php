@@ -56,7 +56,7 @@ class BookingPolicy
      */
     public function update(User $user, Booking $booking): bool
     {
-        return $user->role !== 'customer' || $booking->customer_id === $user->id;
+        return $user->role !== 'customer';
     }
 
     /**

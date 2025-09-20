@@ -30,8 +30,7 @@ class BookingController extends Controller
                 )
                 ->get();
         } else {
-            $data = Booking::select('id', 'service_id', 'scheduled_at')
-                ->with('service')
+            $data = Booking::with('service')
                 ->with('payment')
                 ->get();
         }
@@ -109,6 +108,10 @@ class BookingController extends Controller
         $payment = null;
 
         if ($user->role === 'customer') {
+            if ($user->id !== $booking->id) {
+                abort(401, 'You can only update your own booking');
+            }
+
             $validated = $request->validate([
                 'status' => 'required|in:cancelled',
             ]);
@@ -177,13 +180,36 @@ class BookingController extends Controller
 
 
 
-    public function deleteBooking(Booking $booking): JsonResponse
+    public function deleteBooking(Request $request, Booking $booking): JsonResponse
     {
+        $user = Auth::user();
+
+        if ($user->role === 'customer' && $booking->customer_id !== $user->id) {
+            abort(403, 'You are not authorized to delete this booking.');
+        }
+
+        $oldStatus = $booking->status;
+        $newStatus = 'cancelled';
+
+        $booking->update([
+            'status' => $newStatus,
+        ]);
+
+        BookingStatusAudit::create([
+            'booking_id'   => $booking->id,
+            'service_name' => $booking->service->name,
+            'changed_by'   => $user->name,
+            'role'         => $user->role,
+            'old_status'   => $oldStatus,
+            'new_status'   => $newStatus,
+            'changed_at'   => now(),
+            'notes'        => $request->input('notes'),
+        ]);
 
         $booking->delete();
 
         return response()->json([
-            'message' => 'Booking deleted successfully'
+            'message' => 'Booking deleted successfully',
         ]);
     }
 }
