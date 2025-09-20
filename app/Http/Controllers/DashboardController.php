@@ -17,9 +17,9 @@ class DashboardController extends Controller
     {
         $baseQuery = Booking::query();
 
-        $total = (clone $baseQuery)->withDateFilter($request)->count();
-        $unpaid = (clone $baseQuery)->withDateFilter($request)->where('status', 'pending')->count();
-        $paid = (clone $baseQuery)->withDateFilter($request)->has('payment')->count();
+        $total = (clone $baseQuery)->withDateFilter($request, 'scheduled_at')->count();
+        $unpaid = (clone $baseQuery)->withDateFilter($request, 'scheduled_at')->where('status', 'pending')->count();
+        $paid = (clone $baseQuery)->withDateFilter($request, 'scheduled_at')->has('payment')->count();
         $conversion_rate = $total > 0 ? round(($paid / $total) * 100, 2) : 0;
 
         $start = Carbon::now()->startOfMonth();
