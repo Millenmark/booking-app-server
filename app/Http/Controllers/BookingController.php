@@ -28,11 +28,14 @@ class BookingController extends Controller
                     'services.name as name',
                     'services.price as price'
                 )
+                ->orderBy('bookings.created_at', 'desc')
                 ->get();
         } else {
             $data = Booking::withTrashed()
+                ->with('customer')
                 ->with('service')
                 ->with('payment')
+                ->orderBy('created_at', 'desc')
                 ->get();
         }
 
