@@ -12,7 +12,9 @@ class AuditTrailController extends Controller
     {
         return response()->json([
             'message' => 'Booking Status Audit fetched successfully',
-            'data' => BookingStatusAudit::with('booking')->get()
+            'data' => BookingStatusAudit::with('booking')
+                ->orderBy('changed_at', 'desc')
+                ->get()
         ]);
     }
 }
