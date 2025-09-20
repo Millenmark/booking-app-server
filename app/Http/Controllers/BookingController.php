@@ -30,7 +30,8 @@ class BookingController extends Controller
                 )
                 ->get();
         } else {
-            $data = Booking::with('service')
+            $data = Booking::withTrashed()
+                ->with('service')
                 ->with('payment')
                 ->get();
         }
@@ -101,46 +102,71 @@ class BookingController extends Controller
     }
 
 
+    private function checkBookingOverlap(Booking $booking, Service $service, string $scheduled_at): ?JsonResponse
+    {
+        $newStart = Carbon::parse($scheduled_at);
+        $newEnd = $newStart->copy()->addMinutes($service->duration_minutes);
+
+        $overlappingBookings = Booking::where('customer_id', $booking->customer_id)
+            ->where('status', '!=', 'cancelled')
+            ->where('id', '!=', $booking->id)
+            ->with('service')
+            ->get();
+
+        foreach ($overlappingBookings as $existing) {
+            $existingStart = Carbon::parse($existing->scheduled_at);
+            $existingService = $existing->service;
+            $existingEnd = $existingStart->copy()->addMinutes($existingService->duration_minutes);
+
+            if ($existingStart->lt($newEnd) && $existingEnd->gt($newStart)) {
+                return response()->json([
+                    'message' => 'Booking overlaps with an existing booking.',
+                    'errors' => [
+                        'scheduled_at' => ['Overlaps with existing booking at ' . $existing->scheduled_at]
+                    ]
+                ], 422);
+            }
+        }
+
+        return null;
+    }
+
     public function updateBooking(Request $request, Booking $booking): JsonResponse
     {
-
         $user = Auth::user();
+        $oldStatus = $booking->status;
         $payment = null;
 
-        if ($user->role === 'customer') {
-            if ($user->id !== $booking->id) {
-                abort(401, 'You can only update your own booking');
+        if ($user->role === 'customer' && $user->id !== $booking->customer_id) {
+            abort(401, 'You can only update your own booking');
+        }
+
+        $rules = [
+            'service_id' => 'sometimes|exists:services,id',
+            'scheduled_at' => 'sometimes|date|after:now',
+        ];
+
+        if ($user->role !== 'customer') {
+            $rules['status'] = 'sometimes|in:pending,confirmed,completed';
+            $rules['notes'] = 'nullable|string|max:1000';
+        }
+
+        $validated = $request->validate($rules);
+
+        if (isset($validated['service_id']) || isset($validated['scheduled_at'])) {
+            $service = isset($validated['service_id']) ? Service::findOrFail($validated['service_id']) : $booking->service;
+            $scheduled_at = $validated['scheduled_at'] ?? $booking->scheduled_at;
+
+            $overlapResponse = $this->checkBookingOverlap($booking, $service, $scheduled_at);
+            if ($overlapResponse) {
+                return $overlapResponse;
             }
+        }
 
-            $validated = $request->validate([
-                'status' => 'required|in:cancelled',
-            ]);
+        $booking->update($validated);
 
-            $oldStatus = $booking->status;
-
-            $booking->update([
-                'status' => 'cancelled',
-            ]);
-
-            BookingStatusAudit::create([
-                'booking_id' => $booking->id,
-                'service_name' => $booking->service->name,
-                'changed_by' => $user->name,
-                'role' => $user->role,
-                'old_status' => $oldStatus,
-                'new_status' => 'cancelled',
-                'changed_at' => now(),
-            ]);
-        } else {
-            $oldStatus = $booking->status;
-
-            $validated = $request->validate([
-                'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
-                'notes' => 'nullable|string|max:1000',
-            ]);
-
-            $booking->update($validated);
-            $newStatus = $booking->fresh()->status;
+        if ($user->role !== 'customer') {
+            $newStatus = $booking->status;
 
             if (($validated['status'] ?? null) === 'confirmed') {
                 $payment = Payment::create([
