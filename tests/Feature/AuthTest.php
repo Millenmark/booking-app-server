@@ -78,7 +78,13 @@ class AuthTest extends TestCase
         ], $this->apiHeaders());
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+            ->assertJsonStructure([
+                'message',
+                'timestamp'
+            ])
+            ->assertJson([
+                'message' => 'The provided credentials do not match our records.'
+            ]);
     }
 
     public function test_user_can_logout(): void
