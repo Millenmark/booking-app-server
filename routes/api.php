@@ -2,22 +2,25 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('/')->group(function () {
-    require __DIR__ . '/api/auth.php';
-});
+Route::middleware(['checkApiKey'])->group(function () {
 
-Route::prefix('bookings')->group(function () {
-    require __DIR__ . '/api/bookings.php';
-});
+    Route::prefix('/')->group(function () {
+        require __DIR__ . '/api/auth.php';
+    });
 
-Route::prefix('services')->group(function () {
-    require __DIR__ . '/api/services.php';
-});
+    Route::prefix('bookings')->group(function () {
+        require __DIR__ . '/api/bookings.php';
+    });
 
-Route::prefix('dashboard')->group(function () {
-    require __DIR__ . '/api/dashboard.php';
-});
+    Route::prefix('services')->group(function () {
+        require __DIR__ . '/api/services.php';
+    });
 
-Route::prefix('audit')->group(function () {
-    require __DIR__ . '/api/audit.php';
+    Route::prefix('dashboard')->group(function () {
+        require __DIR__ . '/api/dashboard.php';
+    });
+
+    Route::prefix('audit')->group(function () {
+        require __DIR__ . '/api/audit.php';
+    });
 });
