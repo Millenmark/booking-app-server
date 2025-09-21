@@ -17,9 +17,9 @@ return new class extends Migration
             $table->foreignId('booking_id')
                 ->constrained('bookings')
                 ->onDelete('cascade');
-            $table->foreignId('changed_by')
-                ->constrained('users')
-                ->onDelete('cascade');
+            $table->string('service_name');
+            $table->string('changed_by');
+            $table->string('role');
             $table->string('old_status');
             $table->string('new_status');
             $table->timestamp('changed_at');

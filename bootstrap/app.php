@@ -19,7 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'not-customer' => \App\Http\Middleware\EnsureNotCustomer::class,
+            'checkApiKey' => \App\Http\Middleware\CheckApiKey::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (ModelNotFoundException $e, Request $request) {

@@ -3,10 +3,12 @@
 use App\Http\Controllers\BookingController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function () {
-  Route::get('/', [BookingController::class, 'getAllBookings']);
-  Route::post('/', [BookingController::class, 'createBooking']);
-  Route::get('/{booking}', [BookingController::class, 'getSingleBooking']);
-  Route::put('/{booking}', [BookingController::class, 'updateBooking']);
-  Route::delete('/{booking}', [BookingController::class, 'deleteBooking']);
-});
+Route::middleware(['auth:sanctum'])
+  ->controller(BookingController::class)
+  ->group(function () {
+    Route::get('/', 'getAllBookings');
+    Route::post('/', 'createBooking');
+    Route::get('/{booking}', 'getSingleBooking');
+    Route::put('/{booking}', 'updateBooking');
+    Route::delete('/{booking}', 'deleteBooking');
+  });

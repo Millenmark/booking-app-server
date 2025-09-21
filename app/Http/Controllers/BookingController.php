@@ -28,11 +28,14 @@ class BookingController extends Controller
                     'services.name as name',
                     'services.price as price'
                 )
+                ->orderBy('bookings.created_at', 'desc')
                 ->get();
         } else {
-            $data = Booking::select('id', 'service_id', 'scheduled_at')
+            $data = Booking::withTrashed()
+                ->with('customer')
                 ->with('service')
                 ->with('payment')
+                ->orderBy('created_at', 'desc')
                 ->get();
         }
 
@@ -45,6 +48,7 @@ class BookingController extends Controller
 
     public function createBooking(Request $request): JsonResponse
     {
+
         $user = Auth::user();
 
         $validated = $request->validate([
@@ -53,12 +57,8 @@ class BookingController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        if (in_array($user->role, ['customer'])) {
-            $validated['customer_id'] = $user->id;
-            $validated['status'] = 'pending';
-        } else {
-            abort(403, 'Only Customers can create booking');
-        }
+        $validated['customer_id'] = $user->id;
+        $validated['status'] = 'pending';
 
         $service = Service::findOrFail($validated['service_id']);
         $duration = $service->duration_minutes;
@@ -95,13 +95,8 @@ class BookingController extends Controller
 
     public function getSingleBooking(Booking $booking): JsonResponse
     {
+
         $booking->load('payment');
-
-        $user = Auth::user();
-
-        if ($user->role === 'customer' && $booking->customer_id != $user->id) {
-            abort(403, 'You can only view your own bookings.');
-        }
 
         return response()->json([
             'message' => 'Booking fetched successfully',
@@ -110,43 +105,71 @@ class BookingController extends Controller
     }
 
 
+    private function checkBookingOverlap(Booking $booking, Service $service, string $scheduled_at): ?JsonResponse
+    {
+        $newStart = Carbon::parse($scheduled_at);
+        $newEnd = $newStart->copy()->addMinutes($service->duration_minutes);
+
+        $overlappingBookings = Booking::where('customer_id', $booking->customer_id)
+            ->where('status', '!=', 'cancelled')
+            ->where('id', '!=', $booking->id)
+            ->with('service')
+            ->get();
+
+        foreach ($overlappingBookings as $existing) {
+            $existingStart = Carbon::parse($existing->scheduled_at);
+            $existingService = $existing->service;
+            $existingEnd = $existingStart->copy()->addMinutes($existingService->duration_minutes);
+
+            if ($existingStart->lt($newEnd) && $existingEnd->gt($newStart)) {
+                return response()->json([
+                    'message' => 'Booking overlaps with an existing booking.',
+                    'errors' => [
+                        'scheduled_at' => ['Overlaps with existing booking at ' . $existing->scheduled_at]
+                    ]
+                ], 422);
+            }
+        }
+
+        return null;
+    }
+
     public function updateBooking(Request $request, Booking $booking): JsonResponse
     {
         $user = Auth::user();
+        $oldStatus = $booking->status;
         $payment = null;
 
-        if ($user->role === 'customer') {
-            if ($booking->customer_id != $user->id) {
-                abort(403, 'You can only update your own bookings.');
+        if ($user->role === 'customer' && $user->id !== $booking->customer_id) {
+            abort(401, 'You can only update your own booking');
+        }
+
+        $rules = [
+            'service_id' => 'sometimes|exists:services,id',
+            'scheduled_at' => 'sometimes|date|after:now',
+        ];
+
+        if ($user->role !== 'customer') {
+            $rules['status'] = 'sometimes|in:pending,confirmed,completed';
+            $rules['notes'] = 'nullable|string|max:1000';
+        }
+
+        $validated = $request->validate($rules);
+
+        if (isset($validated['service_id']) || isset($validated['scheduled_at'])) {
+            $service = isset($validated['service_id']) ? Service::findOrFail($validated['service_id']) : $booking->service;
+            $scheduled_at = $validated['scheduled_at'] ?? $booking->scheduled_at;
+
+            $overlapResponse = $this->checkBookingOverlap($booking, $service, $scheduled_at);
+            if ($overlapResponse) {
+                return $overlapResponse;
             }
+        }
 
-            $validated = $request->validate([
-                'status' => 'required|in:cancelled',
-            ]);
+        $booking->update($validated);
 
-            $oldStatus = $booking->status;
-
-            $booking->update([
-                'status' => 'cancelled',
-            ]);
-
-            BookingStatusAudit::create([
-                'booking_id' => $booking->id,
-                'changed_by' => $user->id,
-                'old_status' => $oldStatus,
-                'new_status' => 'cancelled',
-                'changed_at' => now(),
-            ]);
-        } else {
-            $oldStatus = $booking->status;
-
-            $validated = $request->validate([
-                'status' => 'sometimes|in:pending,confirmed,completed,cancelled',
-                'notes' => 'nullable|string|max:1000',
-            ]);
-
-            $booking->update($validated);
-            $newStatus = $booking->fresh()->status;
+        if ($user->role !== 'customer') {
+            $newStatus = $booking->status;
 
             if (($validated['status'] ?? null) === 'confirmed') {
                 $payment = Payment::create([
@@ -161,7 +184,9 @@ class BookingController extends Controller
             if (isset($validated['status']) && $oldStatus !== $newStatus) {
                 BookingStatusAudit::create([
                     'booking_id' => $booking->id,
-                    'changed_by' => $user->id,
+                    'service_name' => $booking->service->name,
+                    'changed_by' => $user->name,
+                    'role' => $user->role,
                     'old_status' => $oldStatus,
                     'new_status' => $newStatus,
                     'changed_at' => now(),
@@ -184,18 +209,36 @@ class BookingController extends Controller
 
 
 
-    public function deleteBooking(Booking $booking): JsonResponse
+    public function deleteBooking(Request $request, Booking $booking): JsonResponse
     {
         $user = Auth::user();
 
-        if (in_array($user->role, ['customer']) && $booking->customer_id != $user->id) {
-            abort(403, 'You can only delete your own bookings.');
+        if ($user->role === 'customer' && $booking->customer_id !== $user->id) {
+            abort(403, 'You are not authorized to delete this booking.');
         }
+
+        $oldStatus = $booking->status;
+        $newStatus = 'cancelled';
+
+        $booking->update([
+            'status' => $newStatus,
+        ]);
+
+        BookingStatusAudit::create([
+            'booking_id'   => $booking->id,
+            'service_name' => $booking->service->name,
+            'changed_by'   => $user->name,
+            'role'         => $user->role,
+            'old_status'   => $oldStatus,
+            'new_status'   => $newStatus,
+            'changed_at'   => now(),
+            'notes'        => $request->input('notes'),
+        ]);
 
         $booking->delete();
 
         return response()->json([
-            'message' => 'Booking deleted successfully'
+            'message' => 'Booking deleted successfully',
         ]);
     }
 }
