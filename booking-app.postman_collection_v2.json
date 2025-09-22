@@ -1,0 +1,427 @@
+{
+    "info": {
+        "_postman_id": "1a156727-965b-4300-9fe9-0c10de0d5fb3",
+        "name": "booking-app",
+        "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+        "_exporter_id": "27342119"
+    },
+    "item": [
+        {
+            "name": "Bookings",
+            "item": [
+                {
+                    "name": "Get All Bookings",
+                    "protocolProfileBehavior": {
+                        "disabledSystemHeaders": {
+                            "accept": true
+                        }
+                    },
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "",
+                                "type": "text",
+                                "disabled": true
+                            }
+                        ],
+                        "url": "{{localURL}}/api/bookings"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Booking",
+                    "protocolProfileBehavior": {
+                        "disabledSystemHeaders": {
+                            "accept": true
+                        }
+                    },
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "",
+                                "type": "text",
+                                "disabled": true
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    //   \"customer_id\": 1,\r\n    \"service_id\": 1,\r\n    \"scheduled_at\": \"2025-09-24T14:30:00\"\r\n    //   \"status\": \"confirmed\",\r\n    //   \"notes\": \"Customer requested window seat.\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/bookings"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Booking Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    \"service_id\": 2,\r\n    \"scheduled_at\": \"2025-09-21T14:30:00\"\r\n\r\n    // !Status update is for admin/staff only\r\n    // \"status\": \"pending\"\r\n    // \"status\": \"completed\"\r\n    // \"status\": \"confirmed\"\r\n\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/bookings/1"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Soft Delete Booking",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"service_id\": 2,\r\n    // \"scheduled_at\": \"2025-09-21T14:30:00\",\r\n    // \"status\": \"pending\"\r\n    // \"status\": \"completed\"\r\n    \"status\": \"confirmed\"\r\n\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/bookings/1"
+                    },
+                    "response": []
+                }
+            ],
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [""]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "packages": {},
+                        "exec": [""]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "let responseData = pm.response.json();\r",
+                                    "\r",
+                                    "if (responseData && responseData.token) {\r",
+                                    "    pm.environment.set(\"loginToken\", responseData.token);\r",
+                                    "\r",
+                                    "} else {\r",
+                                    "    console.error(\"Token not found in response\");\r",
+                                    "}\r",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [""],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    // \"email\": \"customer1@mailsac.com\",\r\n    \"email\": \"staff@mailsac.com\",\r\n    \"password\": \"password\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/login"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Register",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "let responseData = pm.response.json();\r",
+                                    "\r",
+                                    "if (responseData && responseData.token) {\r",
+                                    "    pm.environment.set(\"loginToken\", responseData.token);\r",
+                                    "\r",
+                                    "} else {\r",
+                                    "    console.error(\"Token not found in response\");\r",
+                                    "}\r",
+                                    ""
+                                ],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [""],
+                                "type": "text/javascript",
+                                "packages": {}
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    \"name\": \"sample\",\r\n    \"email\": \"customer3@mailsac.com\",\r\n    // \"email\": \"staff@mailsac.com\",\r\n    \"password\": \"password\",\r\n    \"password_confirmation\": \"password\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/register"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": ""
+                        },
+                        "url": "{{localURL}}/api/logout"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Forgot Password",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    \"email\": \"customer1@mailsac.com\"\r\n\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/forgot-password"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    \"email\": \"customer1@mailsac.com\",\r\n    \"token\": \"a819a0a3edda18542367aab01795b12d4cb7acdffd4915651ff3d7417271b196\",\r\n    \"password\": \"newpassword\",\r\n    \"password_confirmation\": \"newpassword\"\r\n\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/reset-password"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Services",
+            "item": [
+                {
+                    "name": "Get All Services",
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    },
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    \"email\": \"customer1@mailsac.com\",\r\n    \"token\": \"a819a0a3edda18542367aab01795b12d4cb7acdffd4915651ff3d7417271b196\",\r\n    \"password\": \"newpassword\"\r\n    \"password_confirmation\": \"newpassword\"\r\n\r\n}"
+                        },
+                        "url": "{{localURL}}/api/services"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "item": [
+                {
+                    "name": "Booking Analytics",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n  \"date_from\": \"2025-09-20\",\r\n  \"date_to\": \"2025-09-20\"\r\n}\r\n",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/dashboard/booking-analytics"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Revenue Analytics",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n  \"date_from\": \"2025-09-1\",\r\n  \"date_to\": \"2025-09-30\"\r\n}\r\n",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/dashboard/revenue-analytics"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Service Analytics",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    // \"email\": \"customer1@mailsac.com\",\r\n    \"email\": \"staff@mailsac.com\",\r\n    \"password\": \"password\"\r\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{localURL}}/api/dashboard/service-analytics"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Audit Trail",
+            "item": [
+                {
+                    "name": "Get Activity Log",
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    },
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\r\n    // \"email\": \"admin@mailsac.com\",\r\n    // \"email\": \"customer1@mailsac.com\",\r\n    \"email\": \"staff@mailsac.com\",\r\n    \"password\": \"password\"\r\n}"
+                        },
+                        "url": "{{localURL}}/api/audit/booking-status"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": {
+            "token": "{{loginToken}}"
+        }
+    },
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                    "pm.request.headers.add({\r",
+                    "    key: \"X-Api-Key\",\r",
+                    "    value: \"local\"\r",
+                    "});"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [""]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "localURL",
+            "value": "http://localhost:8000"
+        }
+    ]
+}
