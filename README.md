@@ -67,6 +67,10 @@ This setup includes:
 Using this file is more convenient because it automatically sets the authorization token as a variable when you hit the login endpoint.
 ![Postman Screenshot](https://res.cloudinary.com/dcrkja9f8/image/upload/v1758471984/personal/booking-app/documentation/server_01_pndcpu.png)
 
+## Initial ERD
+
+![ERD Screenshot](https://res.cloudinary.com/dcrkja9f8/image/upload/v1758360443/personal/booking-app/documentation/erd_q1qhd9.png)
+
 ## API Reference if you didn't import postman file
 
 #### Set Header in every request
